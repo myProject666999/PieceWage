@@ -134,7 +134,7 @@ func (r *WageSummaryRepo) RecalcByWorkerMonth(tx *gorm.DB, workerID uint64, mont
 	}
 
 	var allocResult struct{ Total float64 }
-	err = tx.Model(&model.TeamWageAllocationItem{}).
+	err = tx.Table("team_wage_allocation_item twai").
 		Select("COALESCE(SUM(twai.allocated_amt),0) as total").
 		Joins("JOIN team_wage_allocation twa ON twa.id = twai.allocation_id").
 		Joins("JOIN production_report pr ON pr.id = twa.report_id").

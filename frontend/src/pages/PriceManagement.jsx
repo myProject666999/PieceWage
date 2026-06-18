@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Modal, Form, InputNumber, Select, Input, Tag, Space, message, Card, Typography } from 'antd'
+import { Table, Button, Modal, Form, InputNumber, Select, DatePicker, Tag, Space, message, Card, Typography } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { listProcessPrices, createProcessPrice, listProcessSteps, getEffectivePrice } from '../api'
 import dayjs from 'dayjs'
@@ -42,8 +42,15 @@ export default function PriceManagement() {
   useEffect(() => { fetchPrices(); fetchSteps() }, [])
 
   const handleCreate = async (values) => {
+    const payload = {
+      ...values,
+      processId: Number(values.processId),
+      effectiveDate: values.effectiveDate
+        ? dayjs(values.effectiveDate).format('YYYY-MM-DD')
+        : '',
+    }
     try {
-      await createProcessPrice(values)
+      await createProcessPrice(payload)
       message.success('单价创建成功')
       setModalOpen(false)
       form.resetFields()
@@ -56,7 +63,10 @@ export default function PriceManagement() {
   const handlePreviewPrice = async () => {
     const processId = form.getFieldValue('processId')
     const gradeLevel = form.getFieldValue('gradeLevel') || 'STD'
-    const effectiveDate = form.getFieldValue('effectiveDate')
+    const effectiveDateRaw = form.getFieldValue('effectiveDate')
+    const effectiveDate = effectiveDateRaw
+      ? dayjs(effectiveDateRaw).format('YYYY-MM-DD')
+      : ''
     if (!processId || !effectiveDate) {
       message.warning('请先选择工序和生效日期')
       return
@@ -135,8 +145,8 @@ export default function PriceManagement() {
               placeholder="例如: 3.5000" />
           </Form.Item>
           <Form.Item name="effectiveDate" label="生效日期"
-            rules={[{ required: true, message: '请输入生效日期' }]}>
-            <Input placeholder="YYYY-MM-DD，例如: 2024-04-01" />
+            rules={[{ required: true, message: '请选择生效日期' }]}>
+            <DatePicker style={{ width: '100%' }} placeholder="选择生效日期" format="YYYY-MM-DD" />
           </Form.Item>
           <Form.Item>
             <Button icon={<SearchOutlined />} onClick={handlePreviewPrice}>

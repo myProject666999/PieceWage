@@ -61,6 +61,7 @@ func main() {
 	reportHandler := handler.NewReportHandler()
 	wageHandler := handler.NewWageHandler()
 	teamHandler := handler.NewTeamHandler()
+	userHandler := handler.NewUserHandler()
 
 	r.POST("/api/auth/login", authHandler.Login)
 
@@ -97,6 +98,8 @@ func main() {
 		authGroup.GET("/teams", teamHandler.ListTeams)
 		authGroup.GET("/teams/:teamId/members", teamHandler.GetTeamMembers)
 		authGroup.GET("/allocations/:reportId", teamHandler.GetAllocation)
+
+		authGroup.GET("/users", userHandler.ListUsers)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

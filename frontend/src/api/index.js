@@ -52,3 +52,5 @@ export const createTeam = (data) => request.post('/teams', data)
 export const getTeamMembers = (teamId) => request.get(`/teams/${teamId}/members`)
 
 export const getAllocation = (reportId) => request.get(`/allocations/${reportId}`)
+
+export const listUsers = (params) => request.get('/users', { params })

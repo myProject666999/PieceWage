@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Modal, Form, InputNumber, Select, Input, Tag, Space, message, Card, Typography, Row, Col, Descriptions } from 'antd'
+import { Table, Button, Modal, Form, InputNumber, Select, DatePicker, Input, Tag, Space, message, Card, Typography, Row, Col, Descriptions } from 'antd'
 import { PlusOutlined, EyeOutlined, StopOutlined } from '@ant-design/icons'
-import { listReports, createReport, getReport, voidReport, listProcessSteps, listTeams, listStepsByProduct, getEffectivePrice } from '../api'
+import { listReports, createReport, getReport, voidReport, listProcessSteps, listTeams, listStepsByProduct, getEffectivePrice, listUsers } from '../api'
 import dayjs from 'dayjs'
 
 const { Title } = Typography
@@ -12,6 +12,7 @@ export default function ReportManagement() {
   const [reports, setReports] = useState([])
   const [steps, setSteps] = useState([])
   const [teams, setTeams] = useState([])
+  const [workers, setWorkers] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -36,12 +37,14 @@ export default function ReportManagement() {
 
   const fetchOptions = async () => {
     try {
-      const [stepsRes, teamsRes] = await Promise.all([
+      const [stepsRes, teamsRes, usersRes] = await Promise.all([
         listProcessSteps({ page: 1, pageSize: 200 }),
         listTeams(),
+        listUsers({ page: 1, pageSize: 200, role: 1 }),
       ])
       setSteps(stepsRes.data?.list || [])
       setTeams(teamsRes.data || [])
+      setWorkers(usersRes.data?.list || [])
     } catch {}
   }
 
@@ -50,7 +53,8 @@ export default function ReportManagement() {
   const handlePreviewPrice = async () => {
     const processId = form.getFieldValue('processId')
     const gradeLevel = form.getFieldValue('gradeLevel') || 'STD'
-    const reportDate = form.getFieldValue('reportDate')
+    const reportDateRaw = form.getFieldValue('reportDate')
+    const reportDate = reportDateRaw ? dayjs(reportDateRaw).format('YYYY-MM-DD') : ''
     if (!processId || !reportDate) {
       message.warning('请先选择工序和报工日期')
       return
@@ -66,8 +70,16 @@ export default function ReportManagement() {
   }
 
   const handleCreate = async (values) => {
+    const payload = {
+      ...values,
+      reportDate: values.reportDate
+        ? dayjs(values.reportDate).format('YYYY-MM-DD')
+        : '',
+      workerId: Number(values.workerId),
+      processId: Number(values.processId),
+    }
     try {
-      await createReport(values)
+      await createReport(payload)
       message.success('报工成功！系统已按报工当时生效单价计算计件收入')
       setModalOpen(false)
       form.resetFields()
@@ -174,7 +186,16 @@ export default function ReportManagement() {
           initialValues={{ gradeLevel: 'STD', qtyGood: 0, qtyDefect: 0, unitDefect: 0.5 }}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="processId" label="工序" rules={[{ required: true }]}>
+              <Form.Item name="workerId" label="工人" rules={[{ required: true, message: '请选择工人' }]}>
+                <Select placeholder="选择工人" showSearch optionFilterProp="label"
+                  options={workers.map(w => ({
+                    value: w.id,
+                    label: `${w.realName} (${w.username})`,
+                  }))} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="processId" label="工序" rules={[{ required: true, message: '请选择工序' }]}>
                 <Select placeholder="选择工序" showSearch optionFilterProp="label"
                   options={steps.map(s => ({
                     value: s.id,
@@ -182,6 +203,8 @@ export default function ReportManagement() {
                   }))} />
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="gradeLevel" label="等级" rules={[{ required: true }]}>
                 <Select options={[
@@ -191,24 +214,22 @@ export default function ReportManagement() {
                 ]} />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="reportDate" label="报工日期" rules={[{ required: true }]}>
-                <Input placeholder="YYYY-MM-DD" />
+              <Form.Item name="reportDate" label="报工日期" rules={[{ required: true, message: '请选择报工日期' }]}>
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" placeholder="选择报工日期" />
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16} align="middle">
             <Col span={12}>
-              <Form.Item>
-                <Button onClick={handlePreviewPrice} style={{ marginTop: 30 }}>
-                  查询生效单价
-                </Button>
-                {previewPrice && (
-                  <Tag color="green" style={{ marginLeft: 8 }}>
-                    ¥{previewPrice.unitPrice}/件 (V{previewPrice.versionNo})
-                  </Tag>
-                )}
-              </Form.Item>
+              <Button onClick={handlePreviewPrice}>
+                查询生效单价
+              </Button>
+              {previewPrice && (
+                <Tag color="green" style={{ marginLeft: 8 }}>
+                  ¥{previewPrice.unitPrice}/件 (V{previewPrice.versionNo})
+                </Tag>
+              )}
             </Col>
           </Row>
           <Row gutter={16}>
