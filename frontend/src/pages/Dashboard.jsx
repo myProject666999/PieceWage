@@ -3,6 +3,7 @@ import {
   DollarOutlined, FileTextOutlined, TeamOutlined, ToolOutlined,
 } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listReports, listWageSummaries } from '../api'
 import dayjs from 'dayjs'
 
@@ -10,6 +11,7 @@ const { Title } = Typography
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ reportCount: 0, summaryCount: 0 })
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -67,21 +69,21 @@ export default function Dashboard() {
         <Row gutter={16}>
           <Col span={8}>
             <Card hoverable style={{ textAlign: 'center' }}
-              onClick={() => window.location.hash = '#/reports'}>
+              onClick={() => navigate('/reports')}>
               <FileTextOutlined style={{ fontSize: 32, color: '#1677ff' }} />
               <p style={{ marginTop: 8 }}>报工管理</p>
             </Card>
           </Col>
           <Col span={8}>
             <Card hoverable style={{ textAlign: 'center' }}
-              onClick={() => window.location.hash = '#/wage'}>
+              onClick={() => navigate('/wage')}>
               <DollarOutlined style={{ fontSize: 32, color: '#cf1322' }} />
               <p style={{ marginTop: 8 }}>工资查询</p>
             </Card>
           </Col>
           <Col span={8}>
             <Card hoverable style={{ textAlign: 'center' }}
-              onClick={() => window.location.hash = '#/prices'}>
+              onClick={() => navigate('/prices')}>
               <ToolOutlined style={{ fontSize: 32, color: '#52c41a' }} />
               <p style={{ marginTop: 8 }}>单价管理</p>
             </Card>
