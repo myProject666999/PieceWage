@@ -49,8 +49,14 @@ export default function ProcessProduct() {
   }
 
   const handleCreateStep = async (values) => {
+    const payload = {
+      ...values,
+      productId: Number(values.productId),
+      difficulty: Number(values.difficulty),
+      isShared: Number(values.isShared),
+    }
     try {
-      await createProcessStep(values)
+      await createProcessStep(payload)
       message.success('工序创建成功')
       setModalOpen(false); form.resetFields(); fetchSteps()
     } catch (err) { message.error(err.message || '创建失败') }

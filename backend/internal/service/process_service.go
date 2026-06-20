@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"strings"
 
 	"piece-wage/internal/model"
 	"piece-wage/internal/repository"
@@ -9,6 +10,14 @@ import (
 
 	"go.uber.org/zap"
 )
+
+func isDuplicateEntryErr(err error, keyName string) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Error 1062") && strings.Contains(msg, keyName)
+}
 
 type ProcessPriceService struct {
 	priceRepo *repository.ProcessPriceRepo
@@ -117,6 +126,10 @@ func (s *ProcessStepService) Create(req *model.ProcessStepCreateReq) (*model.Pro
 		IsShared:    req.IsShared,
 	}
 	if err := s.stepRepo.Create(step); err != nil {
+		if isDuplicateEntryErr(err, "uk_process_code") {
+			return nil, errors.New("工序编号已存在")
+		}
+		logger.Log.Error("create step failed", zap.Error(err))
 		return nil, errors.New("创建工序失败")
 	}
 	return step, nil
@@ -145,6 +158,10 @@ func (s *ProductService) Create(req *model.ProductCreateReq) (*model.Product, er
 		Spec:        req.Spec,
 	}
 	if err := s.productRepo.Create(p); err != nil {
+		if isDuplicateEntryErr(err, "uk_product_code") {
+			return nil, errors.New("产品编号已存在")
+		}
+		logger.Log.Error("create product failed", zap.Error(err))
 		return nil, errors.New("创建产品失败")
 	}
 	return p, nil

@@ -26,7 +26,8 @@ request.interceptors.response.use(
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
-    return Promise.reject(error)
+    const backendMsg = error.response?.data?.message
+    return Promise.reject(new Error(backendMsg || error.message || '网络异常'))
   }
 )
 
